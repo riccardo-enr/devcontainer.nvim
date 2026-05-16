@@ -58,6 +58,17 @@ local function stub_health()
   return captured
 end
 
+local function valid_workspace()
+  local tmp = vim.fn.tempname()
+  vim.fn.mkdir(tmp .. "/.devcontainer", "p")
+  local f = io.open(tmp .. "/.devcontainer/devcontainer.json", "w")
+  f:write('{"image":"alpine:latest"}')
+  f:close()
+  require("devcontainer").config = { cli = "devcontainer", workspace_folder = tmp, auto_attach = true }
+  package.loaded["devcontainer.config"] = nil
+  return tmp
+end
+
 local function any_contains(list, needle)
   for _, s in ipairs(list) do
     if type(s) == "string" and s:find(needle, 1, true) then return true end
@@ -69,6 +80,7 @@ describe("devcontainer.health.check", function()
   before_each(reset_modules)
 
   it("reports ok with version when CLI is present and --version succeeds", function()
+    valid_workspace()
     local restore_exec = stub_executable({ devcontainer = true, docker = true })
     local sys = stub_vim_system({
       devcontainer = { stdout = "0.65.0\n", code = 0 },
@@ -124,6 +136,7 @@ describe("devcontainer.health.check", function()
   end)
 
   it("falls back to podman when docker is unavailable", function()
+    valid_workspace()
     local restore_exec = stub_executable({ devcontainer = true, podman = true })
     local sys = stub_vim_system({
       devcontainer = { stdout = "0.65.0", code = 0 },
