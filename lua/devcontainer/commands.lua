@@ -1,17 +1,18 @@
 --[[
-Thin wrappers around the `devcontainer` CLI. Each command shells out to
-the CLI binary configured in `require("devcontainer").config.cli` and
-streams output into a scratch terminal buffer.
+User-facing command handlers. Lifecycle commands (`up`, `rebuild`, `status`)
+route through the async `container` module; interactive commands (`exec`,
+`shell`) still use a terminal split since they need a TTY.
 ]]
 
 local config = require("devcontainer.config")
 
 local M = {}
 
---- Build the base argv with the shared --workspace-folder flag.
----@param sub string[]
----@return string[]
-local function argv(sub)
+local function notify(msg, level)
+  vim.notify("devcontainer.nvim: " .. msg, level)
+end
+
+local function exec_argv(sub)
   local cfg = require("devcontainer").config
   local out = { cfg.cli }
   vim.list_extend(out, sub)
@@ -20,8 +21,6 @@ local function argv(sub)
   return out
 end
 
---- Run an argv in a new terminal split.
----@param cmd string[]
 local function run_term(cmd)
   vim.cmd("botright new")
   vim.bo.bufhidden = "wipe"
@@ -32,48 +31,50 @@ local function run_term(cmd)
 end
 
 function M.up()
-  run_term(argv({ "up" }))
-end
-
-function M.down()
-  -- The CLI does not (yet) have a first-class "down"; emulate it via docker.
-  local cfg_path = config.find_config()
-  if not cfg_path then
-    vim.notify("devcontainer.nvim: no devcontainer.json found", vim.log.levels.WARN)
-    return
-  end
-  vim.notify("devcontainer.nvim: down is not implemented yet", vim.log.levels.WARN)
+  require("devcontainer.container").up({})
 end
 
 function M.rebuild()
-  run_term(argv({ "up", "--remove-existing-container", "--build-no-cache" }))
+  require("devcontainer.container").up({ rebuild = true })
+end
+
+function M.status()
+  require("devcontainer.container").status({
+    on_exit = function(state, err)
+      if err or not state.running then
+        notify("stopped" .. (err and (" (" .. err .. ")") or ""), vim.log.levels.WARN)
+        return
+      end
+      local short = (state.container_id or ""):sub(1, 12)
+      notify("running: " .. short .. " ws=" .. (state.remote_workspace_folder or "?"),
+        vim.log.levels.INFO)
+    end,
+  })
 end
 
 ---@param command string
 function M.exec(command)
   if command == nil or command == "" then
-    vim.notify("devcontainer.nvim: :DevcontainerExec requires a command", vim.log.levels.ERROR)
+    notify(":DevcontainerExec requires a command", vim.log.levels.ERROR)
     return
   end
-  local cmd = argv({ "exec" })
-  -- Pass the user command as a single shell invocation so quoting works.
+  local cmd = exec_argv({ "exec" })
   vim.list_extend(cmd, { "sh", "-lc", command })
   run_term(cmd)
 end
 
 function M.shell()
-  local cmd = argv({ "exec" })
+  local cmd = exec_argv({ "exec" })
   vim.list_extend(cmd, { "sh", "-l" })
   run_term(cmd)
 end
 
-function M.status()
-  local cfg_path = config.find_config()
-  if cfg_path then
-    vim.notify("devcontainer.nvim: config -> " .. cfg_path, vim.log.levels.INFO)
-  else
-    vim.notify("devcontainer.nvim: no devcontainer.json found under " .. config.workspace_folder(), vim.log.levels.WARN)
-  end
+function M.log()
+  require("devcontainer.buffer").open()
+end
+
+function M.down()
+  notify("down is not implemented yet", vim.log.levels.WARN)
 end
 
 return M
