@@ -44,4 +44,33 @@ function M.setup(opts)
 	end, { desc = "Open the devcontainer.nvim log buffer" })
 end
 
+--- Build the `cmd` value for `vim.lsp.config`. If a `devcontainer.json`
+--- exists under the workspace, returns a function that routes the LSP
+--- through the in-container server via the [[RPC proxy]]; otherwise
+--- returns `server_argv` unchanged so nvim spawns the LSP host-side.
+--- See ADR-0006 (fallback) and ADR-0007 (lazy `devcontainer up`).
+---@param server_argv string[]
+---@return string[] | fun(dispatchers: table): table
+function M.lsp_cmd(server_argv)
+	local config = require("devcontainer.config")
+	if not config.find_config() then return server_argv end
+
+	require("devcontainer.lsp.scheme").setup()
+
+	return function(dispatchers)
+		local json = require("devcontainer.json")
+		local host_root = config.workspace_folder()
+		local parsed = json.load() or {}
+		local container_root = parsed.workspaceFolder
+			or ("/workspaces/" .. vim.fn.fnamemodify(host_root, ":t"))
+
+		return require("devcontainer.lsp.lazy").start({
+			server_argv = server_argv,
+			host_root = host_root,
+			container_root = container_root,
+			workspace_folder = host_root,
+		}, dispatchers)
+	end
+end
+
 return M
