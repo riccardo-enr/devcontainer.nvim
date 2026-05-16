@@ -38,6 +38,10 @@ function M.setup(opts)
 	vim.api.nvim_create_user_command("DevcontainerStatus", function()
 		require("devcontainer.commands").status()
 	end, { desc = "Show devcontainer status" })
+
+	vim.api.nvim_create_user_command("DevcontainerLog", function()
+		require("devcontainer.commands").log()
+	end, { desc = "Open the devcontainer.nvim log buffer" })
 end
 
 return M
