@@ -42,6 +42,34 @@ function M.setup(opts)
 	vim.api.nvim_create_user_command("DevcontainerLog", function()
 		require("devcontainer.commands").log()
 	end, { desc = "Open the devcontainer.nvim log buffer" })
+
+	vim.api.nvim_create_user_command("DevcontainerTemplate", function()
+		local templates = require("devcontainer.templates")
+		local config = require("devcontainer.config")
+		templates.list({}, function(entries, err)
+			if err then
+				vim.notify("devcontainer.nvim: " .. err, vim.log.levels.ERROR)
+				return
+			end
+			vim.ui.select(entries, {
+				prompt = "Devcontainer template:",
+				format_item = function(item)
+					return item.name .. (item.description ~= "" and (" - " .. item.description) or "")
+				end,
+			}, function(choice)
+				if not choice then return end
+				templates.apply(choice.id, config.workspace_folder(), {}, function(written, apply_err)
+					if apply_err then
+						vim.notify("devcontainer.nvim: " .. apply_err, vim.log.levels.ERROR)
+						return
+					end
+					vim.notify(
+						"devcontainer.nvim: scaffolded " .. choice.id .. " (" .. #written .. " files)",
+						vim.log.levels.INFO)
+				end)
+			end)
+		end)
+	end, { desc = "Scaffold .devcontainer/ from the official templates catalog" })
 end
 
 --- Build the `cmd` value for `vim.lsp.config`. If a `devcontainer.json`
