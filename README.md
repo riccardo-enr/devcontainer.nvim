@@ -81,9 +81,9 @@ vim.lsp.config("pyright", {
 vim.lsp.enable({ "clangd", "pyright" })
 ```
 
-The first buffer that triggers an LSP attach kicks off `devcontainer up`
-in the background and queues outbound JSON-RPC until the container is
-ready. Container-side paths like `/usr/include/...` show up under the
+Start the container with `:DevcontainerUp` (or set `auto_up = true` to
+have the first LSP attach kick it off in the background and queue
+outbound JSON-RPC until ready). Container-side paths like `/usr/include/...` show up under the
 read-only `docker://<container_id>/...` scheme so go-to-definition
 works without bind-mounting system headers.
 
@@ -94,6 +94,7 @@ require("devcontainer").setup({
   cli = "devcontainer",      -- path to the devcontainer CLI binary
   workspace_folder = nil,    -- override workspace folder (defaults to cwd)
   auto_attach = true,        -- focus the terminal split when commands run
+  auto_up = false,           -- implicitly `devcontainer up` on first LSP attach
 })
 ```
 
@@ -102,6 +103,7 @@ require("devcontainer").setup({
 | `cli` | `"devcontainer"` | Path to the `devcontainer` CLI binary. |
 | `workspace_folder` | `nil` | Override workspace folder. Defaults to cwd. |
 | `auto_attach` | `true` | Focus the terminal split when `:DevcontainerExec` / `:DevcontainerShell` opens. |
+| `auto_up` | `false` | If `true`, the first LSP attach triggers `devcontainer up` and queues RPC until ready. If `false`, run `:DevcontainerUp` manually. Set per-project via `.nvim.lua`. |
 
 ## Commands
 

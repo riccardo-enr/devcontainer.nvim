@@ -61,7 +61,10 @@ local OPTS = {
 }
 
 describe("devcontainer.lsp.lazy", function()
-  before_each(reset)
+  before_each(function()
+    reset()
+    require("devcontainer").config.auto_up = true
+  end)
 
   it("queues outbound notify until container.up succeeds, then drains", function()
     local up = stub_container_up()
@@ -109,6 +112,32 @@ describe("devcontainer.lsp.lazy", function()
     assert.are.equal(1, exits[1].code)
     assert.is_true(client.is_closing())
     assert.are.equal(0, sys.calls, "no real proxy on failure")
+    sys.restore()
+  end)
+
+  it("returns a closed client without calling container.up when auto_up = false", function()
+    require("devcontainer").config.auto_up = false
+    local container = require("devcontainer.container")
+    container.state = {
+      container_id = nil, remote_workspace_folder = nil, remote_user = nil,
+      running = false, last_outcome = nil,
+    }
+    local up_called = false
+    container.up = function() up_called = true end
+    local sys = stub_vim_system()
+    local lazy = require("devcontainer.lsp.lazy")
+
+    local exits = {}
+    local client = lazy.start(OPTS, {
+      on_exit = function(code, sig) table.insert(exits, { code = code, sig = sig }) end,
+    })
+    vim.wait(20, function() return #exits > 0 end)
+
+    assert.is_false(up_called, "auto_up = false must not trigger container.up")
+    assert.are.equal(0, sys.calls)
+    assert.is_true(client.is_closing())
+    assert.are.equal(1, #exits)
+    assert.are.equal(1, exits[1].code)
     sys.restore()
   end)
 

@@ -29,6 +29,20 @@ function M.start(opts, dispatchers)
     return proxy.start(opts, dispatchers)
   end
 
+  local cfg = require("devcontainer").config
+  if not cfg.auto_up then
+    vim.schedule(function()
+      vim.notify(
+        "devcontainer.nvim: container not running; run :DevcontainerUp to start LSP",
+        vim.log.levels.WARN
+      )
+    end)
+    if dispatchers.on_exit then
+      vim.schedule(function() pcall(dispatchers.on_exit, 1, 0) end)
+    end
+    return closed_client()
+  end
+
   local queue = {}
   local real
   local closing = false

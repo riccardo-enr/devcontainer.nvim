@@ -4,10 +4,12 @@ local M = {}
 ---@field cli string  Path to the devcontainer CLI binary
 ---@field workspace_folder? string  Override workspace folder (defaults to cwd)
 ---@field auto_attach boolean  Attach to terminal output buffer on long-running commands
+---@field auto_up boolean  Implicitly run `devcontainer up` on first LSP attach
 M.config = {
 	cli = "devcontainer",
 	workspace_folder = nil,
 	auto_attach = true,
+	auto_up = false,
 }
 
 --- Setup devcontainer.nvim with user config
