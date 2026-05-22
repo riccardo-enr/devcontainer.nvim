@@ -37,7 +37,8 @@ flowchart LR
   (`npm install -g @devcontainers/cli`).
 - A container runtime: `docker` or `podman`.
 - A `.devcontainer/devcontainer.json` (or `.devcontainer.json`) in the
-  workspace.
+  workspace. Multiple variants under `.devcontainer/<name>/devcontainer.json`
+  (e.g. `cpu`, `gpu`) are also supported — see [Variants](#variants).
 
 ## Installation
 
@@ -49,7 +50,7 @@ flowchart LR
   cmd = {
     "DevcontainerUp", "DevcontainerDown", "DevcontainerRebuild",
     "DevcontainerExec", "DevcontainerShell", "DevcontainerStatus",
-    "DevcontainerLog", "DevcontainerTemplate",
+    "DevcontainerLog", "DevcontainerTemplate", "DevcontainerVariant",
   },
   opts = {},
 }
@@ -93,6 +94,7 @@ works without bind-mounting system headers.
 require("devcontainer").setup({
   cli = "devcontainer",      -- path to the devcontainer CLI binary
   workspace_folder = nil,    -- override workspace folder (defaults to cwd)
+  config_path = nil,         -- force a specific devcontainer.json (skips the variant picker)
   auto_attach = true,        -- focus the terminal split when commands run
   auto_up = false,           -- implicitly `devcontainer up` on first LSP attach
 })
@@ -102,6 +104,7 @@ require("devcontainer").setup({
 |---|---|---|
 | `cli` | `"devcontainer"` | Path to the `devcontainer` CLI binary. |
 | `workspace_folder` | `nil` | Override workspace folder. Defaults to cwd. |
+| `config_path` | `nil` | Absolute path to a specific `devcontainer.json` (e.g. `.../.devcontainer/gpu/devcontainer.json`). Skips the variant picker. |
 | `auto_attach` | `true` | Focus the terminal split when `:DevcontainerExec` / `:DevcontainerShell` opens. |
 | `auto_up` | `false` | If `true`, the first LSP attach triggers `devcontainer up` and queues RPC until ready. If `false`, run `:DevcontainerUp` manually. Set per-project via `.nvim.lua`. |
 
@@ -116,7 +119,35 @@ require("devcontainer").setup({
 | `:DevcontainerStatus` | Show container id and resolved `workspaceFolder`. |
 | `:DevcontainerLog` | Open the streaming log buffer. |
 | `:DevcontainerTemplate` | Scaffold `.devcontainer/` from the official templates catalog. |
+| `:DevcontainerVariant` | Pick which `devcontainer.json` variant to use for this workspace (see [Variants](#variants)). |
 | `:DevcontainerDown` | (stub) Stop and remove the container. |
+
+## Variants
+
+Some workspaces ship multiple `devcontainer.json` files side by side,
+typically split by hardware target:
+
+```
+.devcontainer/
+  cpu/devcontainer.json
+  gpu/devcontainer.json
+```
+
+When more than one config exists, `:DevcontainerUp` (and
+`:DevcontainerRebuild`) prompt via `vim.ui.select` to pick one. The
+choice is cached per workspace for the rest of the session and passed to
+the CLI via `--config`. Use `:DevcontainerVariant` to re-pick at any
+time, or set `config_path` in `setup()` (or a project `.nvim.lua`) to
+skip the picker entirely:
+
+```lua
+require("devcontainer").setup({
+  config_path = vim.fn.getcwd() .. "/.devcontainer/gpu/devcontainer.json",
+})
+```
+
+The same selection is used by `lsp_cmd`, so the in-container LSP runs
+against the variant you picked.
 
 ## Templates
 
