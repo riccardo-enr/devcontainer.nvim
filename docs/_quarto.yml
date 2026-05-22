@@ -1,0 +1,65 @@
+project:
+  type: website
+  output-dir: _site
+
+website:
+  title: "devcontainer.nvim"
+  description: "Host Neovim, LSP in the container, no path pain."
+  repo-url: https://github.com/riccardo-enr/devcontainer.nvim
+  repo-actions: [edit, issue]
+  page-navigation: true
+  navbar:
+    background: primary
+    search: true
+    left:
+      - href: index.qmd
+        text: Home
+      - href: lsp.qmd
+        text: LSP
+      - href: variants.qmd
+        text: Variants
+      - href: templates.qmd
+        text: Templates
+      - href: troubleshooting.qmd
+        text: Troubleshooting
+      - text: ADRs
+        menu:
+          - href: adr/index.qmd
+            text: Overview
+          - href: adr/0006-graceful-host-fallback.qmd
+            text: ADR-0006 Graceful host fallback
+          - href: adr/0007-lazy-container-up.qmd
+            text: ADR-0007 Lazy container up
+    right:
+      - icon: github
+        href: https://github.com/riccardo-enr/devcontainer.nvim
+        aria-label: GitHub
+  sidebar:
+    style: docked
+    collapse-level: 1
+    contents:
+      - index.qmd
+      - section: Guides
+        contents:
+          - lsp.qmd
+          - variants.qmd
+          - templates.qmd
+          - troubleshooting.qmd
+      - section: Architecture
+        contents:
+          - adr/index.qmd
+          - adr/0006-graceful-host-fallback.qmd
+          - adr/0007-lazy-container-up.qmd
+
+format:
+  html:
+    theme:
+      light: cosmo
+      dark: darkly
+    toc: true
+    toc-depth: 3
+    code-copy: true
+    code-overflow: wrap
+    code-link: true
+    mermaid:
+      theme: neutral

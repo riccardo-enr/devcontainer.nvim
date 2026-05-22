@@ -1,0 +1,19 @@
+---
+title: "Templates"
+---
+
+`:DevcontainerTemplate` pulls the catalog from
+[`devcontainers/templates`](https://github.com/devcontainers/templates),
+presents it via `vim.ui.select`, and scaffolds the chosen template into the
+current workspace's `.devcontainer/`.
+
+## Cache
+
+The catalog and per-template files are cached on disk under
+`stdpath('cache') .. '/devcontainer.nvim/templates/'` with a 24h TTL. On
+fetch failure the existing cache is reused with a "stale catalog" notify;
+missing cache + no network is a hard error. Existing `.devcontainer/` files
+are never overwritten.
+
+See [ADR-0008 — Template catalog cached from the GitHub API](https://github.com/riccardo-enr/devcontainer.nvim)
+(ADR text lives alongside the source for now).

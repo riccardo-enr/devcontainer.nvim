@@ -1,0 +1,54 @@
+---
+title: "Troubleshooting"
+---
+
+Run `:checkhealth devcontainer` first. It probes the CLI, the container
+runtime, and `devcontainer.json` parsing, with a distinct message per failure
+mode.
+
+## `devcontainer` CLI not on PATH
+
+```
+npm install -g @devcontainers/cli
+```
+
+If you keep the binary somewhere non-standard, set
+`cli = "/path/to/devcontainer"` in `setup()`. Re-run
+`:checkhealth devcontainer` to confirm.
+
+## Container runtime daemon not reachable
+
+`:checkhealth devcontainer` reports
+`container runtime present but 'info' failed; daemon may be down`. Start the
+daemon:
+
+```bash
+# docker
+sudo systemctl start docker
+
+# podman (rootless)
+systemctl --user start podman.socket
+```
+
+Verify with `docker info` or `podman info`, then re-run
+`:checkhealth devcontainer`.
+
+## `devcontainer.json` parse errors
+
+The parser accepts JSONC (line/block comments, trailing commas on objects).
+Trailing commas inside arrays and unquoted keys are still rejected. On a
+parse error `:checkhealth devcontainer` prints the file path and the
+underlying error; `:DevcontainerStatus` also surfaces the resolved config
+path so you can confirm which file is being read.
+
+## LSP attaches but go-to-definition opens an empty buffer
+
+The proxy maps `file://` URIs between host paths and `workspaceFolder` paths,
+and exposes container-side paths outside the workspace under the
+`docker://<container_id>/<abs-container-path>` scheme. If a system header
+opens empty, check:
+
+1. `:DevcontainerStatus` — the container must be running.
+2. The buffer name should start with `docker://`. If it shows a host path
+   that does not exist, the workspace folder resolution is off; see
+   [LSP in the container](lsp.qmd).

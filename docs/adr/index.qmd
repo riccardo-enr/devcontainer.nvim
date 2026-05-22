@@ -1,0 +1,13 @@
+---
+title: "Architecture Decision Records"
+listing:
+  contents:
+    - "0*.qmd"
+  type: table
+  fields: [date, title]
+  sort: "date desc"
+---
+
+ADRs capture significant architectural decisions in devcontainer.nvim, with
+the context that led to them and the alternatives considered. Older ADRs are
+not edited; they are superseded by newer ones when a decision changes.

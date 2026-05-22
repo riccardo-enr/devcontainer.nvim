@@ -1,0 +1,92 @@
+---
+title: "LSP in the container"
+---
+
+`require("devcontainer").lsp_cmd(server_argv)` returns a `cmd` value suitable
+for `vim.lsp.config`. When the current workspace has a `devcontainer.json`,
+it routes the LSP through the in-container server; otherwise it returns
+`server_argv` unchanged so nvim spawns the language server on the host. The
+same snippet works in both projects.
+
+```lua
+local lsp_cmd = require("devcontainer").lsp_cmd
+
+vim.lsp.config("clangd", {
+  cmd = lsp_cmd({ "clangd", "--background-index", "--clang-tidy" }),
+  filetypes = { "c", "cpp", "objc", "objcpp", "cuda" },
+  root_markers = { "compile_commands.json", ".clangd", ".git" },
+})
+
+vim.lsp.config("pyright", {
+  cmd = lsp_cmd({ "pyright-langserver", "--stdio" }),
+  filetypes = { "python" },
+  root_markers = { "pyproject.toml", "setup.py", "setup.cfg", ".git" },
+})
+
+vim.lsp.enable({ "clangd", "pyright" })
+```
+
+## The RPC proxy
+
+`lsp_cmd` plugs a small proxy between the LSP client on the host and the LSP
+server inside the container. The proxy reads JSON-RPC frames from stdio and
+rewrites URI-typed fields in both directions, driven by a lookup table built
+from the vendored LSP `metaModel.json`.
+
+```{mermaid}
+sequenceDiagram
+    participant Client as nvim LSP client (host)
+    participant Proxy as RPC proxy
+    participant Server as LSP server (container)
+    Client->>Proxy: textDocument/definition { uri: file:///host/... }
+    Proxy->>Server: { uri: file:///workspaces/repo/... }
+    Server-->>Proxy: location { uri: file:///workspaces/repo/... }
+    Proxy-->>Client: location { uri: file:///host/... }
+```
+
+Container-side paths that live *outside* the `workspaceFolder` (system
+headers, language runtimes) are exposed under a read-only
+`docker://<container_id>/<abs-container-path>` URI scheme. A `BufReadCmd`
+autocmd fetches them on demand via `devcontainer exec cat`, so go-to-definition
+works without bind-mounting `/usr/include`.
+
+## `auto_up` and lazy container startup
+
+By default the user runs `:DevcontainerUp` manually. With `auto_up = true`,
+the first LSP attach triggers `devcontainer up` in the background and queues
+outbound JSON-RPC frames until the container is ready, then drains them into
+the live proxy. See [ADR-0007](adr/0007-lazy-container-up.qmd) for the design
+trade-off (in particular the unbounded queue during `up`).
+
+```lua
+require("devcontainer").setup({
+  auto_up = true,  -- default: false
+})
+```
+
+## Graceful host fallback
+
+`lsp_cmd` is the only line you add to `vim.lsp.config`. When the workspace
+has no `devcontainer.json`, the same `cmd` value spawns the host binary
+directly — no branching in your config. See
+[ADR-0006](adr/0006-graceful-host-fallback.qmd).
+
+## Setup options
+
+```lua
+require("devcontainer").setup({
+  cli = "devcontainer",      -- path to the devcontainer CLI binary
+  workspace_folder = nil,    -- override workspace folder (defaults to cwd)
+  config_path = nil,         -- force a specific devcontainer.json (skips the variant picker)
+  auto_attach = true,        -- focus the terminal split when commands run
+  auto_up = false,           -- implicitly `devcontainer up` on first LSP attach
+})
+```
+
+| Option | Default | Description |
+|---|---|---|
+| `cli` | `"devcontainer"` | Path to the `devcontainer` CLI binary. |
+| `workspace_folder` | `nil` | Override workspace folder. Defaults to cwd. |
+| `config_path` | `nil` | Absolute path to a specific `devcontainer.json`. Skips the variant picker. |
+| `auto_attach` | `true` | Focus the terminal split when `:DevcontainerExec` / `:DevcontainerShell` opens. |
+| `auto_up` | `false` | If `true`, the first LSP attach triggers `devcontainer up` and queues RPC until ready. |
