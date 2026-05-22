@@ -1,0 +1,46 @@
+---
+title: "ADR-0007: First LSP attach triggers `devcontainer up`, outbound frames queue"
+date: 2026-05-16
+status: accepted
+---
+
+## Context
+
+The RPC proxy rejects start when the cached container state reports
+`running == false`. For the one-liner UX promise, the user must never have to
+run `:DevcontainerUp` manually — opening a file should be enough.
+
+## Decision
+
+When `lsp_cmd()` is invoked and the container is not running, the returned
+`cmd` function:
+
+1. Resolves the eventual container `workspaceFolder` up front by parsing
+   `devcontainer.json` (existing `lua/devcontainer/json.lua` + variable
+   substitution).
+2. Calls `container.up({ on_exit = ... })`.
+3. Returns a client wrapper that buffers outbound `request` / `notify` calls
+   in an in-memory queue keyed by insertion order.
+4. On `up`'s `on_exit(state, nil)`, spawns the real proxy with the cached
+   `container_id` / `remote_workspace_folder` and drains the queue into the
+   live client.
+5. On `up`'s `on_exit(_, err)`, calls `dispatchers.on_error(0, err)` for each
+   pending request id and `dispatchers.on_exit(1, 0)`.
+
+This behaviour is gated behind `auto_up = true` in `setup()`.
+
+## Alternatives considered
+
+- **Refuse until `:DevcontainerUp`** — rejected: breaks the one-liner promise.
+- **Block synchronously on first request** — rejected: would freeze the
+  editor for tens of seconds during image build.
+
+## Consequences
+
+- **Positive:** users never see the container plumbing for the happy path.
+- **Negative:** an unbounded queue while `up` runs. Acceptable since LSP
+  startup traffic is small (`initialize` + `initialized` + a few `didOpen`);
+  document as a known limit and consider a hard cap in a future ADR if
+  needed.
+- **Affects:** `lua/devcontainer/init.lua` (`lsp_cmd`),
+  `lua/devcontainer/lsp/proxy.lua` (queue-and-drain entry point).

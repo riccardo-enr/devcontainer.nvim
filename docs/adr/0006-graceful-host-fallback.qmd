@@ -1,0 +1,36 @@
+---
+title: "ADR-0006: lsp_cmd() returns raw argv when no devcontainer.json is present"
+date: 2026-05-16
+status: accepted
+---
+
+## Context
+
+The public `lsp_cmd` wrapper (`require('devcontainer').lsp_cmd(...)`) is
+meant to be the only line users add to their `vim.lsp.config`. Users
+frequently work across mixed workspaces — some with a `.devcontainer/`, some
+without — and the config should not have to branch on that.
+
+## Decision
+
+When `config.find_config()` returns `nil` (no `.devcontainer/devcontainer.json`
+and no `.devcontainer.json` under the workspace folder), `lsp_cmd(argv)`
+returns `argv` unchanged. nvim's LSP client spawns the host binary directly.
+
+When a config is found, `lsp_cmd(argv)` returns a function suitable for
+`cmd = function(dispatchers) ... end`, which delegates to
+`devcontainer.lsp.proxy.start`.
+
+## Alternatives considered
+
+- **Error / require explicit host config** — rejected: forces users to
+  maintain two parallel `vim.lsp.config` entries.
+- **Always proxy** — rejected: would fail on every machine without
+  `.devcontainer/`.
+
+## Consequences
+
+- **Positive:** the one-liner in the docs works verbatim in every repo.
+- **Negative:** silent fallback can surprise users whose `.devcontainer/` is
+  outside the workspace root. `:checkhealth devcontainer` already flags that.
+- **Affects:** `lua/devcontainer/init.lua` (`lsp_cmd`), the LSP setup example.

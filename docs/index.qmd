@@ -1,0 +1,87 @@
+---
+title: "devcontainer.nvim"
+subtitle: "Host Neovim, LSP in the container, no path pain."
+---
+
+Keep Neovim running on the host while LSP servers run inside the
+[Dev Container](https://containers.dev). An in-process RPC proxy rewrites
+`file://` URIs in JSON-RPC traffic so both sides see correct paths for their
+environment. Setup is one line in your `vim.lsp.config`.
+
+```{mermaid}
+flowchart LR
+    subgraph Host[Host nvim]
+        client["LSP client"] <-- RPC --> proxy["RPC proxy<br/>(path mapping)"]
+    end
+    proxy <-- stdio over devcontainer exec --> server["LSP server"]
+    subgraph Container[devcontainer]
+        server <--> fs["workspaceFolder + system files"]
+    end
+```
+
+## Why this plugin
+
+- **Host editor.** Your nvim config, plugins, fonts, and keybindings stay on
+  the host. Nothing extra to install inside the container.
+- **Transparent LSP.** `devcontainer.lsp_cmd(argv)` builds a `cmd` value for
+  `vim.lsp.config` that spawns the language server inside the container and
+  pipes JSON-RPC through a path-rewriting proxy. Same buffer, same
+  diagnostics, container-side dependencies.
+- **Native `devcontainer.json` parsing.** JSONC + variable substitution, not a
+  shell-out. `:checkhealth devcontainer` validates the file before you hit a
+  startup error.
+
+## Requirements
+
+- Neovim >= 0.11 (`vim.lsp.config` / `vim.lsp.enable` API).
+- [`@devcontainers/cli`](https://github.com/devcontainers/cli) on `$PATH`
+  (`npm install -g @devcontainers/cli`).
+- A container runtime: `docker` or `podman`.
+- A `.devcontainer/devcontainer.json` (or `.devcontainer.json`) in the
+  workspace. Multiple variants under `.devcontainer/<name>/devcontainer.json`
+  (e.g. `cpu`, `gpu`) are also supported — see [Variants](variants.qmd).
+
+## Installation
+
+[lazy.nvim](https://github.com/folke/lazy.nvim):
+
+```lua
+{
+  "riccardo-enr/devcontainer.nvim",
+  cmd = {
+    "DevcontainerUp", "DevcontainerDown", "DevcontainerRebuild",
+    "DevcontainerExec", "DevcontainerShell", "DevcontainerStatus",
+    "DevcontainerLog", "DevcontainerTemplate", "DevcontainerVariant",
+  },
+  opts = {},
+}
+```
+
+## Quickstart
+
+```lua
+local lsp_cmd = require("devcontainer").lsp_cmd
+
+vim.lsp.config("clangd", {
+  cmd = lsp_cmd({ "clangd", "--background-index", "--clang-tidy" }),
+  filetypes = { "c", "cpp", "objc", "objcpp", "cuda" },
+  root_markers = { "compile_commands.json", ".clangd", ".git" },
+})
+
+vim.lsp.enable({ "clangd" })
+```
+
+See [LSP in the container](lsp.qmd) for the full story, including `auto_up`
+and the RPC proxy internals.
+
+## Next steps
+
+- [LSP in the container](lsp.qmd) — `lsp_cmd`, the RPC proxy, `auto_up`.
+- [Variants](variants.qmd) — multiple `devcontainer.json` files per workspace.
+- [Templates](templates.qmd) — scaffold from the official templates catalog.
+- [Troubleshooting](troubleshooting.qmd) — `:checkhealth` and common errors.
+- [ADRs](adr/index.qmd) — architectural decisions.
+
+## License
+
+MIT
