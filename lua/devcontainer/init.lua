@@ -3,11 +3,13 @@ local M = {}
 ---@class DevcontainerConfig
 ---@field cli string  Path to the devcontainer CLI binary
 ---@field workspace_folder? string  Override workspace folder (defaults to cwd)
+---@field config_path? string  Force a specific devcontainer.json (e.g. `.devcontainer/gpu/devcontainer.json`); overrides the picker
 ---@field auto_attach boolean  Attach to terminal output buffer on long-running commands
 ---@field auto_up boolean  Implicitly run `devcontainer up` on first LSP attach
 M.config = {
 	cli = "devcontainer",
 	workspace_folder = nil,
+	config_path = nil,
 	auto_attach = true,
 	auto_up = false,
 }
@@ -44,6 +46,10 @@ function M.setup(opts)
 	vim.api.nvim_create_user_command("DevcontainerLog", function()
 		require("devcontainer.commands").log()
 	end, { desc = "Open the devcontainer.nvim log buffer" })
+
+	vim.api.nvim_create_user_command("DevcontainerVariant", function()
+		require("devcontainer.commands").pick_variant()
+	end, { desc = "Pick which devcontainer.json variant to use for this workspace" })
 
 	vim.api.nvim_create_user_command("DevcontainerTemplate", function()
 		local templates = require("devcontainer.templates")
