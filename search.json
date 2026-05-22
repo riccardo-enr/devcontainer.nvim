@@ -1,0 +1,379 @@
+[
+  {
+    "objectID": "templates.html",
+    "href": "templates.html",
+    "title": "Templates",
+    "section": "",
+    "text": ":DevcontainerTemplate pulls the catalog from devcontainers/templates, presents it via vim.ui.select, and scaffolds the chosen template into the current workspace’s .devcontainer/.",
+    "crumbs": [
+      "Home",
+      "Guides",
+      "Templates"
+    ]
+  },
+  {
+    "objectID": "templates.html#cache",
+    "href": "templates.html#cache",
+    "title": "Templates",
+    "section": "Cache",
+    "text": "Cache\nThe catalog and per-template files are cached on disk under stdpath('cache') .. '/devcontainer.nvim/templates/' with a 24h TTL. On fetch failure the existing cache is reused with a “stale catalog” notify; missing cache + no network is a hard error. Existing .devcontainer/ files are never overwritten.\nSee ADR-0008 — Template catalog cached from the GitHub API (ADR text lives alongside the source for now).",
+    "crumbs": [
+      "Home",
+      "Guides",
+      "Templates"
+    ]
+  },
+  {
+    "objectID": "variants.html",
+    "href": "variants.html",
+    "title": "Variants",
+    "section": "",
+    "text": "Some workspaces ship multiple devcontainer.json files side by side, typically split by hardware target:\nWhen more than one config exists, :DevcontainerUp (and :DevcontainerRebuild) prompt via vim.ui.select to pick one. The choice is cached per workspace for the rest of the session and passed to the CLI via --config. Use :DevcontainerVariant to re-pick at any time, or set config_path in setup() (or a project .nvim.lua) to skip the picker entirely:\nThe same selection is used by lsp_cmd, so the in-container LSP runs against the variant you picked.",
+    "crumbs": [
+      "Home",
+      "Guides",
+      "Variants"
+    ]
+  },
+  {
+    "objectID": "variants.html#commands",
+    "href": "variants.html#commands",
+    "title": "Variants",
+    "section": "Commands",
+    "text": "Commands\n\n\n\n\n\n\n\nCommand\nDescription\n\n\n\n\n:DevcontainerUp\nBuild and start the devcontainer. Prompts for a variant if more than one is present.\n\n\n:DevcontainerVariant\nRe-pick the variant for this workspace.\n\n\n:DevcontainerRebuild\nRebuild with --build-no-cache, reusing the current variant.",
+    "crumbs": [
+      "Home",
+      "Guides",
+      "Variants"
+    ]
+  },
+  {
+    "objectID": "adr/index.html",
+    "href": "adr/index.html",
+    "title": "Architecture Decision Records",
+    "section": "",
+    "text": "ADRs capture significant architectural decisions in devcontainer.nvim, with the context that led to them and the alternatives considered. Older ADRs are not edited; they are superseded by newer ones when a decision changes.\n\n\n\n\n\n\n   \n    \n    \n      Order By\n      Default\n      \n        Date - Oldest\n      \n      \n        Date - Newest\n      \n      \n        Title\n      \n    \n  \n    \n      \n      \n    \n\n\n\n\n\n\nDate\n\n\n\nTitle\n\n\n\n\n\n\n\n\nMay 16, 2026\n\n\nADR-0006: lsp_cmd() returns raw argv when no devcontainer.json is present\n\n\n\n\n\n\nMay 16, 2026\n\n\nADR-0007: First LSP attach triggers devcontainer up, outbound frames queue\n\n\n\n\n\n\nNo matching items",
+    "crumbs": [
+      "Home",
+      "Architecture",
+      "Architecture Decision Records"
+    ]
+  },
+  {
+    "objectID": "adr/0006-graceful-host-fallback.html",
+    "href": "adr/0006-graceful-host-fallback.html",
+    "title": "ADR-0006: lsp_cmd() returns raw argv when no devcontainer.json is present",
+    "section": "",
+    "text": "The public lsp_cmd wrapper (require('devcontainer').lsp_cmd(...)) is meant to be the only line users add to their vim.lsp.config. Users frequently work across mixed workspaces — some with a .devcontainer/, some without — and the config should not have to branch on that.",
+    "crumbs": [
+      "Home",
+      "Architecture",
+      "ADR-0006: lsp_cmd() returns raw argv when no devcontainer.json is present"
+    ]
+  },
+  {
+    "objectID": "adr/0006-graceful-host-fallback.html#context",
+    "href": "adr/0006-graceful-host-fallback.html#context",
+    "title": "ADR-0006: lsp_cmd() returns raw argv when no devcontainer.json is present",
+    "section": "",
+    "text": "The public lsp_cmd wrapper (require('devcontainer').lsp_cmd(...)) is meant to be the only line users add to their vim.lsp.config. Users frequently work across mixed workspaces — some with a .devcontainer/, some without — and the config should not have to branch on that.",
+    "crumbs": [
+      "Home",
+      "Architecture",
+      "ADR-0006: lsp_cmd() returns raw argv when no devcontainer.json is present"
+    ]
+  },
+  {
+    "objectID": "adr/0006-graceful-host-fallback.html#decision",
+    "href": "adr/0006-graceful-host-fallback.html#decision",
+    "title": "ADR-0006: lsp_cmd() returns raw argv when no devcontainer.json is present",
+    "section": "Decision",
+    "text": "Decision\nWhen config.find_config() returns nil (no .devcontainer/devcontainer.json and no .devcontainer.json under the workspace folder), lsp_cmd(argv) returns argv unchanged. nvim’s LSP client spawns the host binary directly.\nWhen a config is found, lsp_cmd(argv) returns a function suitable for cmd = function(dispatchers) ... end, which delegates to devcontainer.lsp.proxy.start.",
+    "crumbs": [
+      "Home",
+      "Architecture",
+      "ADR-0006: lsp_cmd() returns raw argv when no devcontainer.json is present"
+    ]
+  },
+  {
+    "objectID": "adr/0006-graceful-host-fallback.html#alternatives-considered",
+    "href": "adr/0006-graceful-host-fallback.html#alternatives-considered",
+    "title": "ADR-0006: lsp_cmd() returns raw argv when no devcontainer.json is present",
+    "section": "Alternatives considered",
+    "text": "Alternatives considered\n\nError / require explicit host config — rejected: forces users to maintain two parallel vim.lsp.config entries.\nAlways proxy — rejected: would fail on every machine without .devcontainer/.",
+    "crumbs": [
+      "Home",
+      "Architecture",
+      "ADR-0006: lsp_cmd() returns raw argv when no devcontainer.json is present"
+    ]
+  },
+  {
+    "objectID": "adr/0006-graceful-host-fallback.html#consequences",
+    "href": "adr/0006-graceful-host-fallback.html#consequences",
+    "title": "ADR-0006: lsp_cmd() returns raw argv when no devcontainer.json is present",
+    "section": "Consequences",
+    "text": "Consequences\n\nPositive: the one-liner in the docs works verbatim in every repo.\nNegative: silent fallback can surprise users whose .devcontainer/ is outside the workspace root. :checkhealth devcontainer already flags that.\nAffects: lua/devcontainer/init.lua (lsp_cmd), the LSP setup example.",
+    "crumbs": [
+      "Home",
+      "Architecture",
+      "ADR-0006: lsp_cmd() returns raw argv when no devcontainer.json is present"
+    ]
+  },
+  {
+    "objectID": "troubleshooting.html",
+    "href": "troubleshooting.html",
+    "title": "Troubleshooting",
+    "section": "",
+    "text": "Run :checkhealth devcontainer first. It probes the CLI, the container runtime, and devcontainer.json parsing, with a distinct message per failure mode.",
+    "crumbs": [
+      "Home",
+      "Guides",
+      "Troubleshooting"
+    ]
+  },
+  {
+    "objectID": "troubleshooting.html#devcontainer-cli-not-on-path",
+    "href": "troubleshooting.html#devcontainer-cli-not-on-path",
+    "title": "Troubleshooting",
+    "section": "devcontainer CLI not on PATH",
+    "text": "devcontainer CLI not on PATH\nnpm install -g @devcontainers/cli\nIf you keep the binary somewhere non-standard, set cli = \"/path/to/devcontainer\" in setup(). Re-run :checkhealth devcontainer to confirm.",
+    "crumbs": [
+      "Home",
+      "Guides",
+      "Troubleshooting"
+    ]
+  },
+  {
+    "objectID": "troubleshooting.html#container-runtime-daemon-not-reachable",
+    "href": "troubleshooting.html#container-runtime-daemon-not-reachable",
+    "title": "Troubleshooting",
+    "section": "Container runtime daemon not reachable",
+    "text": "Container runtime daemon not reachable\n:checkhealth devcontainer reports container runtime present but 'info' failed; daemon may be down. Start the daemon:\n# docker\nsudo systemctl start docker\n\n# podman (rootless)\nsystemctl --user start podman.socket\nVerify with docker info or podman info, then re-run :checkhealth devcontainer.",
+    "crumbs": [
+      "Home",
+      "Guides",
+      "Troubleshooting"
+    ]
+  },
+  {
+    "objectID": "troubleshooting.html#devcontainer.json-parse-errors",
+    "href": "troubleshooting.html#devcontainer.json-parse-errors",
+    "title": "Troubleshooting",
+    "section": "devcontainer.json parse errors",
+    "text": "devcontainer.json parse errors\nThe parser accepts JSONC (line/block comments, trailing commas on objects). Trailing commas inside arrays and unquoted keys are still rejected. On a parse error :checkhealth devcontainer prints the file path and the underlying error; :DevcontainerStatus also surfaces the resolved config path so you can confirm which file is being read.",
+    "crumbs": [
+      "Home",
+      "Guides",
+      "Troubleshooting"
+    ]
+  },
+  {
+    "objectID": "troubleshooting.html#lsp-attaches-but-go-to-definition-opens-an-empty-buffer",
+    "href": "troubleshooting.html#lsp-attaches-but-go-to-definition-opens-an-empty-buffer",
+    "title": "Troubleshooting",
+    "section": "LSP attaches but go-to-definition opens an empty buffer",
+    "text": "LSP attaches but go-to-definition opens an empty buffer\nThe proxy maps file:// URIs between host paths and workspaceFolder paths, and exposes container-side paths outside the workspace under the docker://&lt;container_id&gt;/&lt;abs-container-path&gt; scheme. If a system header opens empty, check:\n\n:DevcontainerStatus — the container must be running.\nThe buffer name should start with docker://. If it shows a host path that does not exist, the workspace folder resolution is off; see LSP in the container.",
+    "crumbs": [
+      "Home",
+      "Guides",
+      "Troubleshooting"
+    ]
+  },
+  {
+    "objectID": "adr/0007-lazy-container-up.html",
+    "href": "adr/0007-lazy-container-up.html",
+    "title": "ADR-0007: First LSP attach triggers devcontainer up, outbound frames queue",
+    "section": "",
+    "text": "The RPC proxy rejects start when the cached container state reports running == false. For the one-liner UX promise, the user must never have to run :DevcontainerUp manually — opening a file should be enough.",
+    "crumbs": [
+      "Home",
+      "Architecture",
+      "ADR-0007: First LSP attach triggers `devcontainer up`, outbound frames queue"
+    ]
+  },
+  {
+    "objectID": "adr/0007-lazy-container-up.html#context",
+    "href": "adr/0007-lazy-container-up.html#context",
+    "title": "ADR-0007: First LSP attach triggers devcontainer up, outbound frames queue",
+    "section": "",
+    "text": "The RPC proxy rejects start when the cached container state reports running == false. For the one-liner UX promise, the user must never have to run :DevcontainerUp manually — opening a file should be enough.",
+    "crumbs": [
+      "Home",
+      "Architecture",
+      "ADR-0007: First LSP attach triggers `devcontainer up`, outbound frames queue"
+    ]
+  },
+  {
+    "objectID": "adr/0007-lazy-container-up.html#decision",
+    "href": "adr/0007-lazy-container-up.html#decision",
+    "title": "ADR-0007: First LSP attach triggers devcontainer up, outbound frames queue",
+    "section": "Decision",
+    "text": "Decision\nWhen lsp_cmd() is invoked and the container is not running, the returned cmd function:\n\nResolves the eventual container workspaceFolder up front by parsing devcontainer.json (existing lua/devcontainer/json.lua + variable substitution).\nCalls container.up({ on_exit = ... }).\nReturns a client wrapper that buffers outbound request / notify calls in an in-memory queue keyed by insertion order.\nOn up’s on_exit(state, nil), spawns the real proxy with the cached container_id / remote_workspace_folder and drains the queue into the live client.\nOn up’s on_exit(_, err), calls dispatchers.on_error(0, err) for each pending request id and dispatchers.on_exit(1, 0).\n\nThis behaviour is gated behind auto_up = true in setup().",
+    "crumbs": [
+      "Home",
+      "Architecture",
+      "ADR-0007: First LSP attach triggers `devcontainer up`, outbound frames queue"
+    ]
+  },
+  {
+    "objectID": "adr/0007-lazy-container-up.html#alternatives-considered",
+    "href": "adr/0007-lazy-container-up.html#alternatives-considered",
+    "title": "ADR-0007: First LSP attach triggers devcontainer up, outbound frames queue",
+    "section": "Alternatives considered",
+    "text": "Alternatives considered\n\nRefuse until :DevcontainerUp — rejected: breaks the one-liner promise.\nBlock synchronously on first request — rejected: would freeze the editor for tens of seconds during image build.",
+    "crumbs": [
+      "Home",
+      "Architecture",
+      "ADR-0007: First LSP attach triggers `devcontainer up`, outbound frames queue"
+    ]
+  },
+  {
+    "objectID": "adr/0007-lazy-container-up.html#consequences",
+    "href": "adr/0007-lazy-container-up.html#consequences",
+    "title": "ADR-0007: First LSP attach triggers devcontainer up, outbound frames queue",
+    "section": "Consequences",
+    "text": "Consequences\n\nPositive: users never see the container plumbing for the happy path.\nNegative: an unbounded queue while up runs. Acceptable since LSP startup traffic is small (initialize + initialized + a few didOpen); document as a known limit and consider a hard cap in a future ADR if needed.\nAffects: lua/devcontainer/init.lua (lsp_cmd), lua/devcontainer/lsp/proxy.lua (queue-and-drain entry point).",
+    "crumbs": [
+      "Home",
+      "Architecture",
+      "ADR-0007: First LSP attach triggers `devcontainer up`, outbound frames queue"
+    ]
+  },
+  {
+    "objectID": "index.html",
+    "href": "index.html",
+    "title": "devcontainer.nvim",
+    "section": "",
+    "text": "Keep Neovim running on the host while LSP servers run inside the Dev Container. An in-process RPC proxy rewrites file:// URIs in JSON-RPC traffic so both sides see correct paths for their environment. Setup is one line in your vim.lsp.config.\nflowchart LR\n    subgraph Host[Host nvim]\n        client[\"LSP client\"] &lt;-- RPC --&gt; proxy[\"RPC proxy&lt;br/&gt;(path mapping)\"]\n    end\n    proxy &lt;-- stdio over devcontainer exec --&gt; server[\"LSP server\"]\n    subgraph Container[devcontainer]\n        server &lt;--&gt; fs[\"workspaceFolder + system files\"]\n    end",
+    "crumbs": [
+      "Home",
+      "devcontainer.nvim"
+    ]
+  },
+  {
+    "objectID": "index.html#why-this-plugin",
+    "href": "index.html#why-this-plugin",
+    "title": "devcontainer.nvim",
+    "section": "Why this plugin",
+    "text": "Why this plugin\n\nHost editor. Your nvim config, plugins, fonts, and keybindings stay on the host. Nothing extra to install inside the container.\nTransparent LSP. devcontainer.lsp_cmd(argv) builds a cmd value for vim.lsp.config that spawns the language server inside the container and pipes JSON-RPC through a path-rewriting proxy. Same buffer, same diagnostics, container-side dependencies.\nNative devcontainer.json parsing. JSONC + variable substitution, not a shell-out. :checkhealth devcontainer validates the file before you hit a startup error.",
+    "crumbs": [
+      "Home",
+      "devcontainer.nvim"
+    ]
+  },
+  {
+    "objectID": "index.html#requirements",
+    "href": "index.html#requirements",
+    "title": "devcontainer.nvim",
+    "section": "Requirements",
+    "text": "Requirements\n\nNeovim &gt;= 0.11 (vim.lsp.config / vim.lsp.enable API).\n@devcontainers/cli on $PATH (npm install -g @devcontainers/cli).\nA container runtime: docker or podman.\nA .devcontainer/devcontainer.json (or .devcontainer.json) in the workspace. Multiple variants under .devcontainer/&lt;name&gt;/devcontainer.json (e.g. cpu, gpu) are also supported — see Variants.",
+    "crumbs": [
+      "Home",
+      "devcontainer.nvim"
+    ]
+  },
+  {
+    "objectID": "index.html#installation",
+    "href": "index.html#installation",
+    "title": "devcontainer.nvim",
+    "section": "Installation",
+    "text": "Installation\nlazy.nvim:\n{\n  \"riccardo-enr/devcontainer.nvim\",\n  cmd = {\n    \"DevcontainerUp\", \"DevcontainerDown\", \"DevcontainerRebuild\",\n    \"DevcontainerExec\", \"DevcontainerShell\", \"DevcontainerStatus\",\n    \"DevcontainerLog\", \"DevcontainerTemplate\", \"DevcontainerVariant\",\n  },\n  opts = {},\n}",
+    "crumbs": [
+      "Home",
+      "devcontainer.nvim"
+    ]
+  },
+  {
+    "objectID": "index.html#quickstart",
+    "href": "index.html#quickstart",
+    "title": "devcontainer.nvim",
+    "section": "Quickstart",
+    "text": "Quickstart\nlocal lsp_cmd = require(\"devcontainer\").lsp_cmd\n\nvim.lsp.config(\"clangd\", {\n  cmd = lsp_cmd({ \"clangd\", \"--background-index\", \"--clang-tidy\" }),\n  filetypes = { \"c\", \"cpp\", \"objc\", \"objcpp\", \"cuda\" },\n  root_markers = { \"compile_commands.json\", \".clangd\", \".git\" },\n})\n\nvim.lsp.enable({ \"clangd\" })\nSee LSP in the container for the full story, including auto_up and the RPC proxy internals.",
+    "crumbs": [
+      "Home",
+      "devcontainer.nvim"
+    ]
+  },
+  {
+    "objectID": "index.html#next-steps",
+    "href": "index.html#next-steps",
+    "title": "devcontainer.nvim",
+    "section": "Next steps",
+    "text": "Next steps\n\nLSP in the container — lsp_cmd, the RPC proxy, auto_up.\nVariants — multiple devcontainer.json files per workspace.\nTemplates — scaffold from the official templates catalog.\nTroubleshooting — :checkhealth and common errors.\nADRs — architectural decisions.",
+    "crumbs": [
+      "Home",
+      "devcontainer.nvim"
+    ]
+  },
+  {
+    "objectID": "index.html#license",
+    "href": "index.html#license",
+    "title": "devcontainer.nvim",
+    "section": "License",
+    "text": "License\nMIT",
+    "crumbs": [
+      "Home",
+      "devcontainer.nvim"
+    ]
+  },
+  {
+    "objectID": "lsp.html",
+    "href": "lsp.html",
+    "title": "LSP in the container",
+    "section": "",
+    "text": "require(\"devcontainer\").lsp_cmd(server_argv) returns a cmd value suitable for vim.lsp.config. When the current workspace has a devcontainer.json, it routes the LSP through the in-container server; otherwise it returns server_argv unchanged so nvim spawns the language server on the host. The same snippet works in both projects.",
+    "crumbs": [
+      "Home",
+      "Guides",
+      "LSP in the container"
+    ]
+  },
+  {
+    "objectID": "lsp.html#the-rpc-proxy",
+    "href": "lsp.html#the-rpc-proxy",
+    "title": "LSP in the container",
+    "section": "The RPC proxy",
+    "text": "The RPC proxy\nlsp_cmd plugs a small proxy between the LSP client on the host and the LSP server inside the container. The proxy reads JSON-RPC frames from stdio and rewrites URI-typed fields in both directions, driven by a lookup table built from the vendored LSP metaModel.json.\n\n\n\n\n\nsequenceDiagram\n    participant Client as nvim LSP client (host)\n    participant Proxy as RPC proxy\n    participant Server as LSP server (container)\n    Client-&gt;&gt;Proxy: textDocument/definition { uri: file:///host/... }\n    Proxy-&gt;&gt;Server: { uri: file:///workspaces/repo/... }\n    Server--&gt;&gt;Proxy: location { uri: file:///workspaces/repo/... }\n    Proxy--&gt;&gt;Client: location { uri: file:///host/... }\n\n\n\n\n\n\nContainer-side paths that live outside the workspaceFolder (system headers, language runtimes) are exposed under a read-only docker://&lt;container_id&gt;/&lt;abs-container-path&gt; URI scheme. A BufReadCmd autocmd fetches them on demand via devcontainer exec cat, so go-to-definition works without bind-mounting /usr/include.",
+    "crumbs": [
+      "Home",
+      "Guides",
+      "LSP in the container"
+    ]
+  },
+  {
+    "objectID": "lsp.html#auto_up-and-lazy-container-startup",
+    "href": "lsp.html#auto_up-and-lazy-container-startup",
+    "title": "LSP in the container",
+    "section": "auto_up and lazy container startup",
+    "text": "auto_up and lazy container startup\nBy default the user runs :DevcontainerUp manually. With auto_up = true, the first LSP attach triggers devcontainer up in the background and queues outbound JSON-RPC frames until the container is ready, then drains them into the live proxy. See ADR-0007 for the design trade-off (in particular the unbounded queue during up).\nrequire(\"devcontainer\").setup({\n  auto_up = true,  -- default: false\n})",
+    "crumbs": [
+      "Home",
+      "Guides",
+      "LSP in the container"
+    ]
+  },
+  {
+    "objectID": "lsp.html#graceful-host-fallback",
+    "href": "lsp.html#graceful-host-fallback",
+    "title": "LSP in the container",
+    "section": "Graceful host fallback",
+    "text": "Graceful host fallback\nlsp_cmd is the only line you add to vim.lsp.config. When the workspace has no devcontainer.json, the same cmd value spawns the host binary directly — no branching in your config. See ADR-0006.",
+    "crumbs": [
+      "Home",
+      "Guides",
+      "LSP in the container"
+    ]
+  },
+  {
+    "objectID": "lsp.html#setup-options",
+    "href": "lsp.html#setup-options",
+    "title": "LSP in the container",
+    "section": "Setup options",
+    "text": "Setup options\nrequire(\"devcontainer\").setup({\n  cli = \"devcontainer\",      -- path to the devcontainer CLI binary\n  workspace_folder = nil,    -- override workspace folder (defaults to cwd)\n  config_path = nil,         -- force a specific devcontainer.json (skips the variant picker)\n  auto_attach = true,        -- focus the terminal split when commands run\n  auto_up = false,           -- implicitly `devcontainer up` on first LSP attach\n})\n\n\n\n\n\n\n\n\nOption\nDefault\nDescription\n\n\n\n\ncli\n\"devcontainer\"\nPath to the devcontainer CLI binary.\n\n\nworkspace_folder\nnil\nOverride workspace folder. Defaults to cwd.\n\n\nconfig_path\nnil\nAbsolute path to a specific devcontainer.json. Skips the variant picker.\n\n\nauto_attach\ntrue\nFocus the terminal split when :DevcontainerExec / :DevcontainerShell opens.\n\n\nauto_up\nfalse\nIf true, the first LSP attach triggers devcontainer up and queues RPC until ready.",
+    "crumbs": [
+      "Home",
+      "Guides",
+      "LSP in the container"
+    ]
+  }
+]

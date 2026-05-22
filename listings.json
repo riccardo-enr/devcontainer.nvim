@@ -1,0 +1,9 @@
+[
+  {
+    "listing": "/adr/index.html",
+    "items": [
+      "/adr/0006-graceful-host-fallback.html",
+      "/adr/0007-lazy-container-up.html"
+    ]
+  }
+]
